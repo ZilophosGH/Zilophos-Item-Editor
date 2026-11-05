@@ -15,6 +15,30 @@ local spellOrPotion = require("Spammer/zilophosItemMod/spell_potions")
 local cf = mwse.loadConfig(mod.name, mod.cf)
 
 local originals = {}
+local fileSourceCache = {}
+
+local function getFileSourceWithBSA(path)
+    local cached = fileSourceCache[path]
+    if cached then
+        return cached.source, cached.path, cached.bsaFile
+    end
+
+    local source = tes3.getFileSource(path)
+    local bsaFile
+    if source == "bsa" then
+        local archive = tes3.bsaLoader:findFile(path)
+        if archive then
+            bsaFile = archive.path
+        end
+    end
+
+    fileSourceCache[path] = {
+        source = source,
+        path = path,
+        bsaFile = bsaFile,
+    }
+    return source, path, bsaFile
+end
 
 local function editables(item)
     local editable = {
@@ -1139,18 +1163,6 @@ local function firstMenu(filter)
             local iconPath = ((item.objectType ~= tes3.objectType.spell) and item.icon) or item.effects[1].object.bigIcon
             local ddsIcon = ((string.gsub(iconPath, ".tga", ".dds")))
 
-
-            local function getFileSourceWithBSA(path)
-	            local source = tes3.getFileSource(path)
-	            local bsaFile = nil
-	            if (source == "bsa") then
-		            local archive = tes3.bsaLoader:findFile(path)
-		            if (archive) then
-			            bsaFile = archive.path
-		            end
-	            end
-	        return source, path, bsaFile
-            end
 
             local iconBSAFile, iconSource, path
             if (ddsIcon) then
